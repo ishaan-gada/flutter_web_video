@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:http_parser/http_parser.dart';
 
 class CameraWithLoader extends StatelessWidget {
   static const route = '/camera-with-loader';
@@ -134,7 +137,8 @@ class _CameraScreenState extends State<CameraScreen> {
 
       // Create Blob from bytes
       final blob = html.Blob([bytes], 'video/webm');
-
+      apiCall(videoFile,
+          'https://2e1a-2401-4900-1cba-87ec-84ea-23c9-b5fc-7008.ngrok-free.app/upload');
       // Create download link
       final url = html.Url.createObjectUrlFromBlob(blob);
       final anchor = html.AnchorElement(href: url)
@@ -289,5 +293,29 @@ class _CameraScreenState extends State<CameraScreen> {
         },
       ),
     );
+  }
+
+  apiCall(XFile videoFile, String url) async {
+    final bytes = await videoFile.readAsBytes();
+    final uri = Uri.parse(url);
+    const mimeType = 'video/webm';
+    final mimeTypeParts = mimeType.split('/');
+    final mediaType = MediaType(mimeTypeParts[0], mimeTypeParts[1]);
+    final request = http.MultipartRequest('POST', uri);
+    request.files.add(await http.MultipartFile.fromBytes('videoResume', bytes,
+        contentType: mediaType));
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final responseBody = await http.Response.fromStream(response);
+      final res = json.decode(responseBody.body);
+      return res;
+    } else {
+      print('Error in multipart request: $url');
+      print('Status code: ${response.statusCode}');
+      return {
+        'error': 'Failed to upload video',
+        'statusCode': response.statusCode,
+      };
+    }
   }
 }

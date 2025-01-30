@@ -49,7 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
     //   _counter = video.toString();
     // });
     Navigator.push(
-        context, MaterialPageRoute(builder: (context) => CameraScreen()));
+        context, MaterialPageRoute(builder: (context) => CameraWithLoader()));
   }
 
   @override
